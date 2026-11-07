@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<!-- 变体：local-ui-ux-pro-max（Minimalism & Swiss Style，深色 slate + 状态绿，Fira Sans / Fira Code）-->
+<!-- 基底：demo.html，结构/DOM id/mock 数据/JS 全部原样，只改 <style> 与字体引入 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>朝言夕语 · 管理后台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0F172A;
+    --card: #1B2336;
+    --muted-bg: #272F42;
+    --primary: #1E293B;
+    --secondary: #334155;
+    --accent: #22C55E;
+    --on-accent: #0F172A;
+    --fg: #F8FAFC;
+    --muted: #94A3B8;
+    --faint: rgba(148, 163, 184, .65);
+    --border: #475569;
+    --danger: #EF4444;
+    --ring: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Fira Sans", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 15px; line-height: 1.5; }
+  h1 { font-size: 20px; line-height: 1.3; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 20px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 5px; }
+  input[type=text], textarea, select { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); font-size: 14px; line-height: 1.5; color: var(--fg); }
+  input[type=text]:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(34, 197, 94, .35); }
+  textarea { min-height: 120px; resize: vertical; font-family: "Fira Code", ui-monospace, monospace; font-size: 13px; }
+  .desc { font-size: 12px; color: var(--faint); line-height: 1.6; margin-top: 4px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; min-width: 0; }
+  button { background: var(--accent); color: var(--on-accent); border: none; border-radius: 4px; padding: 9px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: filter .2s ease, background .2s ease; }
+  button:hover { filter: brightness(1.1); }
+  button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--border); font-weight: 500; }
+  button.ghost:hover { background: var(--muted-bg); filter: none; }
+  button:disabled { opacity: .5; }
+  .hidden { display: none !important; }
+
+  /* 登录 */
+  #login { max-width: 420px; margin: 120px auto; padding: 0 24px; }
+  #login h1 { font-size: 24px; }
+  #login input { margin-bottom: 12px; }
+
+  /* 方向 C：分组侧边栏 + 面包屑 + 分页 */
+  .shell { display: flex; min-height: 100vh; }
+  .side { width: 220px; flex-shrink: 0; background: var(--bg); border-right: 1px solid var(--border); padding: 20px 12px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .side .brand { font-size: 15px; font-weight: 700; padding: 0 10px 4px; }
+  .side .brand small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+  .side .grp { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); padding: 20px 10px 6px; }
+  .side .nav { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--fg); font-size: 14px; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 2px; transition: background .2s ease, color .2s ease; }
+  .side .nav:hover { background: var(--muted-bg); }
+  .side .nav.on { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .crumb { font-size: 12px; color: var(--muted); padding: 20px 28px 0; letter-spacing: .04em; }
+  .content { flex: 1; max-width: 880px; width: 100%; margin: 0 auto; padding: 12px 28px 64px; }
+  .page { animation: fadein .25s ease; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .page { animation: none; } }
+  .page-head { margin-bottom: 8px; }
+  .bar { position: sticky; bottom: 0; background: var(--bg); padding: 12px 28px; display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--border); }
+  .bar .spacer { flex: 1; }
+  #msg { font-size: 14px; }
+  .mood { border: 1px solid var(--border); border-radius: 4px; padding: 12px; margin-bottom: 12px; background: var(--card); }
+  .mood b { font-size: 14px; }
+  #testImg { max-width: 100%; border-radius: 4px; margin-top: 16px; }
+  pre.prompt, pre.doc { white-space: pre-wrap; word-break: break-all; font-size: 12px; font-family: "Fira Code", ui-monospace, monospace; background: var(--muted-bg); color: var(--fg); padding: 12px; border-radius: 4px; max-height: 200px; overflow: auto; }
+  pre.doc { max-height: 320px; }
+  .danger-text { color: var(--danger); font-weight: 700; }
+
+  @media (max-width: 760px) {
+    .shell { display: block; }
+    .side { width: 100%; height: auto; position: static; padding: 12px; border-right: none; border-bottom: 1px solid var(--border); }
+    .side .brand { display: none; }
+    .side .grp { padding-top: 8px; }
+    .side .nav { display: inline-block; width: auto; margin: 0 4px 4px 0; }
+    .crumb { padding: 16px 20px 0; }
+    .content { padding: 8px 20px 64px; }
+    .bar { padding: 12px 20px; }
+    .row { flex-direction: column; gap: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="login">
+  <h1>管理后台</h1>
+  <p class="sub">朝言夕语 · mu-node 管理后台<br>请输入管理密钥（在服务器 data/admin-key.json 里，首次由助理生成并只告诉你一次）。</p>
+  <input type="text" id="keyInput" placeholder="管理密钥" autocomplete="off">
+  <button id="loginBtn">进入后台</button>
+  <p id="loginMsg" class="desc"></p>
+</div>
+
+<div id="app" class="shell hidden">
+  <aside class="side">
+    <div class="brand">🐥 管理后台<small>朝言夕语 · mu-node</small></div>
+    <div class="grp">内容</div>
+    <button class="nav on" data-page="prompts">提示词</button>
+    <button class="nav" data-page="moods">壁纸与意境</button>
+    <button class="nav" data-page="fortune">一签设置</button>
+    <div class="grp">用户</div>
+    <button class="nav" data-page="users">用户管理</button>
+    <button class="nav" data-page="db">数据库</button>
+    <div class="grp">系统</div>
+    <button class="nav" data-page="models">模型配置</button>
+    <button class="nav" data-page="params">模型参数</button>
+    <button class="nav" data-page="test">测试壁纸</button>
+  </aside>
+
+  <div class="main">
+    <div class="crumb" id="crumb">内容 / 提示词</div>
+    <div class="content">
+
+      <section class="page" id="page-prompts">
+        <div class="page-head"><h1>提示词</h1>
+        <p class="sub">这里的提示词就是产品实际在用的规范提示词。改完点“保存”，立即生效，不用重新部署、不用重启服务。改坏了也别怕，删掉服务器 data/prompts.local.json 就回到出厂默认值。</p></div>
+        <div id="prompts"></div>
+      </section>
+
+      <section class="page hidden" id="page-moods">
+        <div class="page-head"><h1>壁纸与意境</h1>
+        <p class="sub">每个意境的画面描述与文字气质。由意境决定，不点名任何字体。</p></div>
+        <div class="row">
+          <div>
+            <label>文字最大高度占比（0.1–0.6，0.33 = 不超过画面三分之一）</label>
+            <input type="text" id="textMaxHeightFraction" placeholder="0.33">
+          </div>
+          <div>
+            <label>落款文字（留空则不写落款）</label>
+            <input type="text" id="signature" placeholder="朝言夕语">
+          </div>
+        </div>
+        <div id="moods" style="margin-top:16px"></div>
+        <div class="mood">
+          <b>新增意境</b>
+          <div class="row">
+            <div><label>英文 key（如 rain）</label><input type="text" id="newMoodKey" placeholder="rain"></div>
+            <div><label>名字</label><input type="text" id="newMoodName" placeholder="雨夜"></div>
+          </div>
+          <label>画面描述 scene</label><textarea id="newMoodScene" style="min-height:60px" placeholder="Rainy night watercolor painting, ..."></textarea>
+          <label>文字气质 textStyle</label><input type="text" id="newMoodStyle" placeholder="quiet rainy lettering, calm and cozy">
+          <div style="margin-top:12px"><button class="ghost" id="addMoodBtn" type="button">新增这个意境</button></div>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-fortune">
+        <div class="page-head"><h1>一签设置</h1>
+        <p class="sub">上上签出现的概率，和幸运数字的范围。改完点“保存”立即生效。</p></div>
+        <div class="row">
+          <div>
+            <label>上上签概率（0–0.5，0.1 = 约 10%）</label>
+            <input type="text" id="topChance" placeholder="0.1">
+          </div>
+          <div>
+            <label>幸运数字上限（1–99）</label>
+            <input type="text" id="luckyNumberMax" placeholder="9">
+          </div>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-users">
+        <div class="page-head"><h1>用户管理</h1>
+        <p class="sub">朝言夕语小程序用户。停用会立刻清掉他的登录会话，登录和鉴权都会拦住；删除连同收藏和会话一起删，不可恢复。</p></div>
+        <div id="userList"></div>
+      </section>
+
+      <section class="page hidden" id="page-db">
+        <div class="page-head"><h1>数据库</h1>
+        <p class="sub">只读浏览，ID 已截断脱敏。点一个集合看它的文档。</p></div>
+        <div id="dbList"></div>
+        <div id="dbDocs"></div>
+      </section>
+
+      <section class="page hidden" id="page-models">
+        <div class="page-head"><h1>模型配置</h1>
+        <p class="sub">改完下一次生成就用新模型。改完点“保存”立即生效。</p></div>
+        <div class="row">
+          <div>
+            <label>对话模型（生签 / 意象卡 / 解读 / 语录）</label>
+            <input type="text" id="chatModel" placeholder="gpt-6.1-sol">
+            <p class="desc">走 JJJ 中转。留空则用环境变量里的默认值。</p>
+          </div>
+          <div>
+            <label>对话接口地址（可空）</label>
+            <input type="text" id="chatBaseUrl" placeholder="http://43.98.190.8">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>生图模型（语录壁纸）</label>
+            <input type="text" id="imageModel" placeholder="gpt-image-2">
+            <p class="desc">以后想换生图模型，在这里改名字就行。</p>
+          </div>
+          <div>
+            <label>生图尺寸</label>
+            <select id="imageSize">
+              <option value="1024x1536">1024x1536（竖版壁纸）</option>
+              <option value="1024x1024">1024x1024（方图）</option>
+              <option value="1536x1024">1536x1024（横版）</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>生图接口地址（可空）</label>
+          <input type="text" id="imageBaseUrl" placeholder="http://43.98.190.8">
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-params">
+        <div class="page-head"><h1>模型参数</h1>
+        <p class="sub">每个功能单独调。temperature 越高越发散、越低越稳；maxTokens 是单次回答最长字数上限。</p></div>
+        <div id="params"></div>
+      </section>
+
+      <section class="page hidden" id="page-test">
+        <div class="page-head"><h1>测试壁纸</h1>
+        <p class="sub">用当前配置现生一张，改完提示词或模型后在这里验效果，不用去小程序里试。</p></div>
+        <div class="row">
+          <div><input type="text" id="testQuote" placeholder="写一句语录，如：傍晚的风掀起窗帘，橘猫睡在膝头" value="傍晚的风掀起窗帘，橘猫睡在膝头，把心事暖成一场轻梦。"></div>
+          <div><select id="testMood"></select></div>
+          <div style="flex:0 0 auto"><button class="ghost" id="testBtn">生成一张看看</button></div>
+        </div>
+        <p id="testMsg" class="desc"></p>
+        <img id="testImg" class="hidden">
+        <details><summary style="cursor:pointer;font-size:13px;margin-top:12px">查看本次实际发给模型的提示词</summary><pre class="prompt" id="testPrompt"></pre></details>
+      </section>
+
+    </div>
+
+    <div class="bar" id="saveBar">
+      <button id="saveBtn">保存全部配置</button>
+      <button class="ghost" id="reloadBtn">放弃修改，重新读取</button>
+      <span id="msg"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+let KEY = 'demo';
+window.__MOCK_CONFIG = {"version": 1, "models": {"chat": {"provider": "jjj", "model": "gpt-6.1-sol", "baseUrl": ""}, "image": {"provider": "jjj", "model": "gpt-image-2", "baseUrl": "", "size": "1024x1536"}}, "prompts": {"wallpaper": {"name": "\u8bed\u5f55\u58c1\u7eb8\u751f\u56fe", "description": "\u6574\u5f20\u58c1\u7eb8\u7531\u6a21\u578b\u4e00\u6b21\u753b\u5b8c\u3002\u53d8\u91cf\uff1a{scene} \u610f\u5883\u753b\u9762\uff0c{textStyle} \u6587\u5b57\u6c14\u8d28\uff0c{quote} \u8bed\u5f55\uff0c{textMaxHeightPercent} \u6587\u5b57\u6700\u5927\u9ad8\u5ea6\u5360\u6bd4\uff0c{signature} \u843d\u6b3e\u3002\u6587\u5b57\u53ea\u662f\u8f85\u52a9\uff1a\u5c0f\u3001\u6de1\u3001\u85cf\u5728\u7559\u767d\u91cc\uff0c\u753b\u9762\u662f\u4e3b\u89d2\u3002", "template": "Vertical phone wallpaper, 9:16, {scene}. Render the following Chinese text EXACTLY, character by character, with no missing, added or altered characters, in {textStyle}, soft off-white, thin elegant strokes, small and understated, occupying no more than {textMaxHeightPercent}% of the image height, placed quietly in the empty negative space, low contrast, blending gently into the background, the text must NOT dominate the scene \u2014 the illustration is the main subject, the text is a whisper. Arranged in vertical lines reading top to bottom, centered in the middle of the image: '{quote}' Do not add any other text, letters, numbers or watermark. At the bottom, very small text: '{signature}'.", "settings": {"textMaxHeightFraction": 0.33, "signature": "\u671d\u8a00\u5915\u8bed"}}, "wallpaperMoods": {"name": "\u58c1\u7eb8\u610f\u5883", "description": "\u6bcf\u4e2a\u610f\u5883\u7684\u753b\u9762\u63cf\u8ff0\uff08scene\uff09\u4e0e\u6587\u5b57\u6c14\u8d28\uff08textStyle\uff09\uff0c\u7531\u610f\u5883\u51b3\u5b9a\uff0c\u4e0d\u70b9\u540d\u4efb\u4f55\u5b57\u4f53\u3002", "moods": {"heal": {"name": "\u6cbb\u6108", "scene": "Ethereal watercolor painting, warm healing scene matching the quote mood, soft golden light, dreamy texture, muted warm palette", "textStyle": "soft warm lettering, gentle and comforting"}, "lone": {"name": "\u5b64\u72ec", "scene": "Melancholic ink wash painting, solitary figure in vast misty landscape at dusk, cinematic solitude, muted blue-gray palette", "textStyle": "quiet restrained lettering, sparse and lonely"}, "rise": {"name": "\u52b1\u5fd7", "scene": "Epic watercolor sunrise over mountain peaks, golden light breaking through clouds, hopeful soaring mood, warm gold and amber palette", "textStyle": "bright hopeful lettering, upright and steady"}, "love": {"name": "\u6d6a\u6f2b", "scene": "Dreamy watercolor sunset over calm sea, soft rose and lavender hues, romantic tranquil atmosphere", "textStyle": "gentle romantic lettering, soft and tender"}, "zen": {"name": "\u5b81\u9759", "scene": "Minimalist zen ink painting, still lake with perfect mirror reflection, extreme simplicity, vast negative space, soft gray-blue palette, contemplative calm", "textStyle": "calm minimal lettering, airy and unhurried"}}}, "fortune": {"name": "\u4eca\u65e5\u4e00\u7b7e", "description": "AI \u6309\u7528\u6237+\u65e5\u671f\u73b0\u5199\u4e13\u5c5e\u7b7e\uff0c\u540c\u4e00\u7528\u6237\u540c\u4e00\u5929\u7ed3\u679c\u4e0d\u53d8\u3002\u7b7e\u7ea7\u5206\u5e03\u514b\u5236\uff0c\u4e0a\u4e0a\u7b7e\u6982\u7387\u7531 settings.topChance \u51b3\u5b9a\u3002", "system": "\u4f60\u662f\u4f20\u7edf\u7b7e\u8bd7\u4f5c\u8005\uff0c\u4e3a\u7528\u6237\u5199\u4e00\u652f\u4eca\u65e5\u4e13\u5c5e\u7b7e\u3002\u53ea\u8fd4\u56de JSON\uff0c\u4e0d\u8981\u4efb\u4f55\u89e3\u91ca\u3001\u4e0d\u8981 markdown \u4ee3\u7801\u5757\u3002\u683c\u5f0f\uff1a{\"level\":\"\u4e0a\u4e0a\u7b7e|\u4e0a\u7b7e|\u4e2d\u4e0a\u7b7e|\u4e2d\u7b7e|\u4e2d\u5e73\u7b7e\",\"poem\":[\"\u4e03\u5b57\u4e00\u53e5\",\"\u4e03\u5b57\u4e00\u53e5\",\"\u4e03\u5b57\u4e00\u53e5\",\"\u4e03\u5b57\u4e00\u53e5\"],\"advice\":\"20-40\u5b57\u89e3\u7b7e\uff0c\u5177\u4f53\u4e0d\u7a7a\u6d1e\",\"luckyColor\":\"2-4\u5b57\",\"luckyNumber\":1-{luckyNumberMax}\u6570\u5b57,\"luckyDir\":\"\u4e1c\u65b9|\u5357\u65b9|\u897f\u65b9|\u5317\u65b9|\u4e1c\u5357\u65b9|\u4e1c\u5317\u65b9|\u897f\u5357\u65b9|\u897f\u5317\u65b9\",\"yi\":\"\u5b9c\u505a\u7684\u4e8b\uff0c2-3\u9879\u7528\u987f\u53f7\u5206\u9694\",\"ji\":\"\u5fcc\u505a\u7684\u4e8b\uff0c2-3\u9879\u7528\u987f\u53f7\u5206\u9694\"}\u3002\u8981\u6c42\uff1a\u7b7e\u8bd7\u539f\u521b\u4e03\u8a00\u56db\u53e5\u3001\u62bc\u97f5\u3001\u4e0d\u76f4\u63a5\u6284\u53e4\u8bd7\u540d\u53e5\uff1b\u7b7e\u7ea7\u5206\u5e03\u514b\u5236\uff0c\u4e0a\u4e0a\u7b7e\u7ea6 {topChancePercent}% \u6982\u7387\uff0c\u5927\u591a\u662f\u4e2d\u4e0a\u7b7e/\u4e2d\u7b7e\uff1b\u5e78\u8fd0\u7269\u4e0e\u7b7e\u8bd7\u610f\u5883\u547c\u5e94\uff1b\u8bed\u6c14\u6e29\u6696\u3001\u4e0d\u505a\u547d\u8fd0\u9884\u6d4b\u3001\u4e0d\u8c08\u75be\u75c5\u707e\u7978\u3002", "settings": {"topChance": 0.1, "luckyNumberMax": 9}, "params": {"temperature": 0.9, "maxTokens": 600}}, "psycheCard": {"name": "\u5fc3\u7406\u610f\u8c61\u5361\u62bd\u5361", "description": "\u6bcf\u6b21\u62bd\u5361 AI \u6309\u95ee\u9898\u73b0\u9020\u65b0\u5361\uff0c\u5361\u540d\u3001\u7b26\u53f7\u3001\u6b63\u53cd\u89e3\u8bfb\u3001\u5173\u952e\u8bcd\u90fd\u5f53\u573a\u751f\u6210\u3002\u7981\u5854\u7f57\u539f\u540d\u3001\u7981\u9884\u6d4b/\u8bca\u65ad\u8bdd\u672f\u3002", "system": "\u4f60\u662f\u5fc3\u7406\u5b66\u79d1\u666e\u4f5c\u8005\uff0c\u4e3a\u7528\u6237\u62bd\u5fc3\u7406\u610f\u8c61\u5361\u3002\u53ea\u8fd4\u56de JSON\uff0c\u4e0d\u8981\u4efb\u4f55\u89e3\u91ca\u3001\u4e0d\u8981 markdown \u4ee3\u7801\u5757\u3002\u683c\u5f0f\uff1a{\"cards\":[{\"name\":\"2-4\u5b57\u539f\u521b\u610f\u8c61\u540d\",\"image\":\"\u4e00\u4e2a emoji\",\"light\":\"30-50\u5b57\u6b63\u5411\u5fc3\u7406\u6295\u5c04\u89e3\u8bfb\",\"shadow\":\"30-50\u5b57\u9634\u5f71\u9762\u89e3\u8bfb\",\"keywords\":[\"2\u5b57\",\"2\u5b57\",\"2\u5b57\"]}]}\u3002\u8981\u6c42\uff1a\u5361\u540d\u539f\u521b\uff0c\u4e0d\u7528\u5854\u7f57\u724c\u540d\uff08\u611a\u8005/\u9b54\u672f\u5e08/\u5973\u796d\u53f8\u7b49\u4e00\u5f8b\u4e0d\u7528\uff09\uff0c\u4e0d\u7528\u661f\u5ea7\u8fd0\u52bf\u8bdd\u672f\uff1b\u89e3\u8bfb\u662f\u5fc3\u7406\u6295\u5c04\u89c6\u89d2\uff0c\u6e29\u6696\u3001\u4e0d\u8bf4\u6559\u3001\u4e0d\u505a\u547d\u8fd0\u9884\u6d4b\u3001\u4e0d\u8bca\u65ad\u5fc3\u7406\u75be\u75c5\uff1b\u591a\u5f20\u5361\u4e4b\u95f4\u610f\u8c61\u4e0d\u91cd\u590d\u3002", "params": {"temperature": 0.9, "maxTokens": 800}}, "psycheDream": {"name": "\u68a6\u5883\u89e3\u6790", "description": "\u5fc3\u7406\u5b66\u89c6\u89d2\u89e3\u6790\u68a6\u5883\uff0c300 \u5b57\u4e2d\u6587\uff0c\u6e29\u6696\u3001\u4e0d\u8bf4\u6559\u3001\u4e0d\u9884\u6d4b\u3001\u4e0d\u8bca\u65ad\u3002", "system": "\u4f60\u662f\u5fc3\u7406\u5b66\u79d1\u666e\u4f5c\u8005\u3002\u4ece\u5fc3\u7406\u5b66\u89c6\u89d2\u89e3\u6790\u68a6\u5883\uff1a1. \u68a6\u4e2d2-3\u4e2a\u5173\u952e\u610f\u8c61\u7684\u8c61\u5f81\u542b\u4e49\uff08\u8363\u683c/\u5f17\u6d1b\u4f0a\u5fb7\u901a\u4fd7\u7248\uff09 2. \u53ef\u80fd\u5bf9\u5e94\u7684\u73b0\u5b9e\u60c5\u7eea\u6216\u538b\u529b\u6e90 3. \u4e00\u6761\u6e29\u548c\u7684\u81ea\u6211\u5173\u6000\u5efa\u8bae\u3002300\u5b57\u4e2d\u6587\uff0c\u6e29\u6696\u3001\u4e0d\u8bf4\u6559\u3001\u4e0d\u505a\u9884\u6d4b\u3001\u4e0d\u8bca\u65ad\u5fc3\u7406\u75be\u75c5\u3002", "params": {"temperature": 0.85, "maxTokens": 1200}}, "psycheReading": {"name": "\u610f\u8c61\u5361 AI \u89e3\u8bfb", "description": "\u7ed3\u5408\u62bd\u5230\u7684\u5361\u505a\u5fc3\u7406\u5206\u6790\uff0c300 \u5b57\u4e2d\u6587\uff0c\u4e25\u7981\u5360\u535c\u3001\u9884\u6d4b\u3001\u7b97\u547d\u3001\u8fd0\u52bf\u7c7b\u8868\u8ff0\u3002", "system": "\u4f60\u662f\u5fc3\u7406\u5b66\u79d1\u666e\u4f5c\u8005\u3002\u7528\u6237\u62bd\u4e86\u5fc3\u7406\u610f\u8c61\u5361\u505a\u81ea\u6211\u63a2\u7d22\u3002\u8bf7\uff1a1. \u4e00\u53e5\u8bdd\u70b9\u51fa\u6b64\u523b\u7684\u5fc3\u7406\u4e3b\u9898 2. \u7ed3\u5408\u6bcf\u5f20\u5361\u7684\u542b\u4e49\u505a\u5fc3\u7406\u5206\u6790\uff08\u6295\u5c04\u89c6\u89d2\uff0c\u4e0d\u8c08\u547d\u8fd0\u9884\u6d4b\uff09 3. \u7ed9\u4e00\u6761\u5177\u4f53\u7684\u884c\u52a8\u5efa\u8bae\u3002300\u5b57\u4e2d\u6587\uff0c\u6e29\u6696\u771f\u8bda\u3002\u4e25\u7981\u51fa\u73b0\u5360\u535c\u3001\u9884\u6d4b\u3001\u7b97\u547d\u3001\u8fd0\u52bf\u7c7b\u8868\u8ff0\u3002", "params": {"temperature": 0.85, "maxTokens": 1200}}, "quote": {"name": "\u8bed\u5f55\u751f\u6210", "description": "\u6309\u5fc3\u5883\u5199\u4e00\u53e5 20-30 \u5b57\u539f\u521b\u4e2d\u6587\u8bed\u5f55\uff0c\u610f\u8c61\u5177\u4f53\u3001\u6709\u753b\u9762\u611f\u3001\u4e0d\u8bf4\u6559\u3001\u4e0d\u9e21\u6c64\u3002", "system": "\u4f60\u662f\u60c5\u611f\u6587\u6848\u4f5c\u8005\u3002\u6309\u7528\u6237\u7ed9\u7684\u5fc3\u5883\uff0c\u5199\u4e00\u53e5 20-30 \u5b57\u7684\u539f\u521b\u4e2d\u6587\u8bed\u5f55\u3002\u8981\u6c42\uff1a\u610f\u8c61\u5177\u4f53\u3001\u6709\u753b\u9762\u611f\u3001\u4e0d\u8bf4\u6559\u3001\u4e0d\u9e21\u6c64\u3001\u4e0d\u51fa\u73b0\"\u4e0d\u662f\u2026\u800c\u662f\u2026\"\u53e5\u5f0f\u3002\u53ea\u8fd4\u56de\u8bed\u5f55\u6b63\u6587\uff0c\u4e0d\u8981\u5f15\u53f7\u3001\u4e0d\u8981\u89e3\u91ca\u3002", "params": {"temperature": 0.9, "maxTokens": 120}}, "letter": {"name": "AI \u5199\u4fe1", "description": "\u5199\u4fe1\u63a5\u53e3\u7684\u7cfb\u7edf\u63d0\u793a\u8bcd\uff08\u5c0f\u7a0b\u5e8f\u5df2\u4e0b\u7ebf\u8be5\u9875\uff0c\u540e\u7aef\u63a5\u53e3\u4fdd\u7559\uff09\u3002", "system": "\u4f60\u662f\u4e00\u4f4d\u6e29\u67d4\u7684\u4e2d\u6587\u4e66\u4fe1\u4f5c\u8005\u3002"}}};
+let CONFIG = null;
+const $ = (id) => document.getElementById(id);
+const PROMPT_KEYS = ['wallpaper', 'fortune', 'psycheCard', 'psycheDream', 'psycheReading', 'quote', 'letter'];
+const PAGES = {
+  prompts: { group: '内容', title: '提示词', save: true },
+  moods: { group: '内容', title: '壁纸与意境', save: true },
+  fortune: { group: '内容', title: '一签设置', save: true },
+  users: { group: '用户', title: '用户管理', save: false },
+  db: { group: '用户', title: '数据库', save: false },
+  models: { group: '系统', title: '模型配置', save: true },
+  params: { group: '系统', title: '模型参数', save: true },
+  test: { group: '系统', title: '测试壁纸', save: false },
+};
+const LAZY_LOADED = {};
+
+function showPage(key) {
+  const meta = PAGES[key] || PAGES.prompts;
+  document.querySelectorAll('.side .nav').forEach(el => el.classList.toggle('on', el.getAttribute('data-page') === key));
+  document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
+  $('page-' + key).classList.remove('hidden');
+  $('crumb').textContent = meta.group + ' / ' + meta.title;
+  $('saveBar').classList.toggle('hidden', !meta.save);
+  localStorage.setItem('adminPage', key);
+  if (key === 'db' && !LAZY_LOADED.db) { LAZY_LOADED.db = true; loadDb(); }
+  if (key === 'users' && !LAZY_LOADED.users) { LAZY_LOADED.users = true; loadUsers(); }
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.side .nav').forEach(el => {
+  el.addEventListener('click', () => showPage(el.getAttribute('data-page')));
+});
+
+async function api(path, method, body) {
+  if (path === '/config') return { success: true, data: window.__MOCK_CONFIG };
+  if (path === '/db') return { success: true, data: [
+    { name: 'reading_users', label: '朝言夕语用户', count: 128 },
+    { name: 'reading_favorites', label: '用户收藏', count: 342 },
+    { name: 'reading_sessions', label: '登录会话', count: 57 },
+    { name: 'rooms', label: '雀神房间', count: 14 },
+    { name: 'room_members', label: '雀神房间成员', count: 52 },
+    { name: 'room_rounds', label: '雀神轮次', count: 96 },
+    { name: 'users', label: '雀神用户', count: 46 },
+    { name: 'user_room_records', label: '雀神用户战绩', count: 41 },
+    { name: 'round_events', label: '雀神记分事件', count: 388 }] };
+  if (path.startsWith('/db/')) return { success: true, data: { total: 128, page: 1, limit: 20, docs: [
+    { _id: 'a1b2c3d4e5f6…', nickName: '清晨的猫', favCount: 12 },
+    { _id: 'f6e5d4c3b2a1…', nickName: '晚安故事集', favCount: 8 }] } };
+  if (path === '/users') return { success: true, data: { total: 128, page: 1, limit: 20, users: [
+    { id: 'a1b2c3d4e5f6…', nickName: '清晨的猫', favCount: 12, sessionCount: 2, disabled: false },
+    { id: 'f6e5d4c3b2a1…', nickName: '晚安故事集', favCount: 8, sessionCount: 1, disabled: false },
+    { id: '9a8b7c6d5e4f…', nickName: '（未设昵称）', favCount: 0, sessionCount: 0, disabled: true }] } };
+  return { success: false, message: '演示数据未覆盖' };
+}
+
+function render() {
+  $('chatModel').value = CONFIG.models.chat.model || '';
+  $('chatBaseUrl').value = CONFIG.models.chat.baseUrl || '';
+  $('imageModel').value = CONFIG.models.image.model || '';
+  $('imageBaseUrl').value = CONFIG.models.image.baseUrl || '';
+  $('imageSize').value = CONFIG.models.image.size || '1024x1536';
+  const p = $('prompts');
+  p.innerHTML = '';
+  for (const k of PROMPT_KEYS) {
+    const pr = CONFIG.prompts[k];
+    if (!pr) continue;
+    const div = document.createElement('div');
+    div.innerHTML = '<label>' + (pr.name || k) + '</label>' +
+      '<textarea data-prompt="' + k + '">' + (pr.system || pr.template || '').replace(/</g, '&lt;') + '</textarea>' +
+      (pr.description ? '<p class="desc">' + pr.description + '</p>' : '');
+    p.appendChild(div);
+  }
+  const m = $('moods');
+  m.innerHTML = '';
+  const moods = CONFIG.prompts.wallpaperMoods.moods;
+  for (const key of Object.keys(moods)) {
+    const mo = moods[key];
+    const div = document.createElement('div');
+    div.className = 'mood';
+    div.innerHTML = '<b>' + mo.name + '（' + key + '）</b> <button class="ghost" style="padding:4px 10px;font-size:12px" data-del-mood="' + key + '">删除</button>' +
+      '<label>画面描述 scene</label><textarea data-mood-scene="' + key + '">' + mo.scene.replace(/</g, '&lt;') + '</textarea>' +
+      '<label>文字气质 textStyle</label><input type="text" data-mood-style="' + key + '" value="' + mo.textStyle.replace(/"/g, '&quot;') + '">';
+    m.appendChild(div);
+  }
+  $('textMaxHeightFraction').value = CONFIG.prompts.wallpaper.settings ? CONFIG.prompts.wallpaper.settings.textMaxHeightFraction : '';
+  $('signature').value = CONFIG.prompts.wallpaper.settings ? CONFIG.prompts.wallpaper.settings.signature : '';
+  $('topChance').value = CONFIG.prompts.fortune.settings ? CONFIG.prompts.fortune.settings.topChance : '';
+  $('luckyNumberMax').value = CONFIG.prompts.fortune.settings ? CONFIG.prompts.fortune.settings.luckyNumberMax : '';
+  const pr = $('params');
+  pr.innerHTML = '';
+  const PARAM_KEYS = ['fortune', 'psycheCard', 'psycheDream', 'psycheReading', 'quote'];
+  for (const k of PARAM_KEYS) {
+    const item = CONFIG.prompts[k];
+    if (!item) continue;
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.innerHTML = '<div><label>' + (item.name || k) + ' · temperature</label><input type="text" data-param-temp="' + k + '" value="' + (item.params ? item.params.temperature : '') + '"></div>' +
+      '<div><label>' + (item.name || k) + ' · maxTokens</label><input type="text" data-param-tokens="' + k + '" value="' + (item.params ? item.params.maxTokens : '') + '"></div>';
+    pr.appendChild(div);
+  }
+  const sel = $('testMood');
+  sel.innerHTML = Object.keys(moods).map(k => '<option value="' + k + '">' + moods[k].name + '</option>').join('');
+}
+
+function collect() {
+  CONFIG.models.chat.model = $('chatModel').value.trim();
+  CONFIG.models.chat.baseUrl = $('chatBaseUrl').value.trim();
+  CONFIG.models.image.model = $('imageModel').value.trim();
+  CONFIG.models.image.baseUrl = $('imageBaseUrl').value.trim();
+  CONFIG.models.image.size = $('imageSize').value;
+  document.querySelectorAll('[data-prompt]').forEach(el => {
+    const k = el.getAttribute('data-prompt');
+    if (CONFIG.prompts[k].system !== undefined) CONFIG.prompts[k].system = el.value;
+    else CONFIG.prompts[k].template = el.value;
+  });
+  document.querySelectorAll('[data-mood-scene]').forEach(el => {
+    CONFIG.prompts.wallpaperMoods.moods[el.getAttribute('data-mood-scene')].scene = el.value;
+  });
+  document.querySelectorAll('[data-mood-style]').forEach(el => {
+    CONFIG.prompts.wallpaperMoods.moods[el.getAttribute('data-mood-style')].textStyle = el.value;
+  });
+  const frac = parseFloat($('textMaxHeightFraction').value);
+  if (!isNaN(frac)) CONFIG.prompts.wallpaper.settings.textMaxHeightFraction = frac;
+  CONFIG.prompts.wallpaper.settings.signature = $('signature').value;
+  const top = parseFloat($('topChance').value);
+  if (!isNaN(top)) CONFIG.prompts.fortune.settings.topChance = top;
+  const lmax = parseInt($('luckyNumberMax').value, 10);
+  if (!isNaN(lmax)) CONFIG.prompts.fortune.settings.luckyNumberMax = lmax;
+  document.querySelectorAll('[data-param-temp]').forEach(el => {
+    const v = parseFloat(el.value);
+    if (!isNaN(v)) CONFIG.prompts[el.getAttribute('data-param-temp')].params.temperature = v;
+  });
+  document.querySelectorAll('[data-param-tokens]').forEach(el => {
+    const v = parseInt(el.value, 10);
+    if (!isNaN(v)) CONFIG.prompts[el.getAttribute('data-param-tokens')].params.maxTokens = v;
+  });
+  return CONFIG;
+}
+
+function escapeHtml(x) { return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+async function loadDb() {
+  const j = await api('/db');
+  const box = $('dbList');
+  if (!j.success) { box.textContent = '数据库不可用'; return; }
+  box.innerHTML = '';
+  for (const c of j.data) {
+    const b = document.createElement('button');
+    b.className = 'ghost';
+    b.style.margin = '0 8px 8px 0';
+    b.textContent = c.label + '（' + c.count + '）';
+    b.onclick = () => loadDbDocs(c.name, 1);
+    box.appendChild(b);
+  }
+}
+async function loadDbDocs(name, page) {
+  const j = await api('/db/' + name + '?page=' + page);
+  const box = $('dbDocs');
+  if (!j.success) { box.textContent = j.message || '读取失败'; return; }
+  let html = '<p class="sub">' + name + ' · 共 ' + j.data.total + ' 条 · 第 ' + j.data.page + ' 页</p>';
+  for (const d of j.data.docs) html += '<pre class="doc">' + escapeHtml(JSON.stringify(d, null, 2)) + '</pre>';
+  if (j.data.total > j.data.page * j.data.limit) html += '<button class="ghost" id="dbNext">下一页</button>';
+  box.innerHTML = html;
+  const next = $('dbNext');
+  if (next) next.onclick = () => loadDbDocs(name, page + 1);
+}
+async function loadUsers() {
+  const j = await api('/users');
+  const box = $('userList');
+  if (!j.success) { box.textContent = '数据库不可用'; return; }
+  let html = '<p class="sub">共 ' + j.data.total + ' 人</p>';
+  for (const u of j.data.users) {
+    html += '<div class="mood"><b>' + escapeHtml(u.nickName || '（未设昵称）') + '</b> <span style="color:#888">' + u.id + '</span>' +
+      ' <span style="color:#888">收藏 ' + u.favCount + ' · 会话 ' + u.sessionCount + '</span>' +
+      (u.disabled ? ' <b class="danger-text">已停用</b>' : '') +
+      ' <button class="ghost" style="padding:4px 10px;font-size:12px" data-toggle-user="' + u.id + '">' + (u.disabled ? '解封' : '停用') + '</button>' +
+      ' <button class="ghost" style="padding:4px 10px;font-size:12px" data-del-user="' + u.id + '">删除</button></div>';
+  }
+  box.innerHTML = html;
+}
+
+async function load() {
+  const d = await api('/config');
+  if (!d.success) { $('loginMsg').textContent = d.message || '密钥不对'; return false; }
+  CONFIG = d.data;
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  render();
+  showPage(localStorage.getItem('adminPage') && PAGES[localStorage.getItem('adminPage')] ? localStorage.getItem('adminPage') : 'prompts');
+  return true;
+}
+
+$('loginBtn').onclick = async () => {
+  KEY = $('keyInput').value.trim();
+  if (!KEY) return;
+  localStorage.setItem('adminKey', KEY);
+  $('loginBtn').disabled = true;
+  const ok = await load();
+  $('loginBtn').disabled = false;
+  if (!ok) localStorage.removeItem('adminKey');
+};
+document.addEventListener('click', (e) => {
+  const tog = e.target.closest('[data-toggle-user]');
+  if (tog) {
+    const id = tog.getAttribute('data-toggle-user');
+    const dis = tog.textContent.trim() === '停用';
+    api('/users/' + id + '/disable', 'POST', { disabled: dis }).then(j => {
+      $('msg').textContent = j.success ? (dis ? '已停用，登录会话已清掉。' : '已解封。') : '操作失败';
+      loadUsers();
+    });
+    return;
+  }
+  const du = e.target.closest('[data-del-user]');
+  if (du) {
+    const id = du.getAttribute('data-del-user');
+    if (!confirm('确定删除这个用户吗？会连同他的收藏和登录会话一起删掉，不可恢复。')) return;
+    fetch('/admin/api/users/' + id, { method: 'DELETE', headers: { 'x-admin-key': KEY } })
+      .then(r => r.json()).then(j => { $('msg').textContent = j.success ? '已删除。' : '删除失败'; loadUsers(); });
+    return;
+  }
+  const del = e.target.closest('[data-del-mood]');
+  if (del) {
+    const key = del.getAttribute('data-del-mood');
+    if (Object.keys(CONFIG.prompts.wallpaperMoods.moods).length <= 1) { $('msg').textContent = '至少留一个意境。'; return; }
+    delete CONFIG.prompts.wallpaperMoods.moods[key];
+    render();
+    $('msg').textContent = '已删除意境 ' + key + '，点保存才生效。';
+  }
+});
+$('addMoodBtn').onclick = () => {
+  const key = $('newMoodKey').value.trim();
+  const name = $('newMoodName').value.trim();
+  const scene = $('newMoodScene').value.trim();
+  const style = $('newMoodStyle').value.trim();
+  if (!key || !name || !scene) { $('msg').textContent = '新增意境要填 key、名字和画面描述。'; return; }
+  if (CONFIG.prompts.wallpaperMoods.moods[key]) { $('msg').textContent = '这个 key 已经有了，换一个。'; return; }
+  CONFIG.prompts.wallpaperMoods.moods[key] = { name, scene, textStyle: style };
+  render();
+  $('msg').textContent = '已新增意境 ' + name + '，点保存才生效。';
+};
+$('saveBtn').onclick = async () => {
+  $('msg').textContent = '保存中…';
+  const d = await api('/config', 'PUT', collect());
+  $('msg').textContent = d.success ? '已保存，立即生效。' : ('保存失败：' + (d.message || ''));
+};
+$('reloadBtn').onclick = () => { load(); $('msg').textContent = '已重新读取。'; };
+$('testBtn').onclick = async () => {
+  const q = $('testQuote').value.trim();
+  if (!q) { $('testMsg').textContent = '先写一句语录'; return; }
+  $('testBtn').disabled = true;
+  $('testMsg').textContent = '正在生成，大约 20-30 秒…';
+  const d = await api('/test-wallpaper', 'POST', { quote: q, mood: $('testMood').value });
+  $('testBtn').disabled = false;
+  if (!d.success) { $('testMsg').textContent = '生成失败：' + (d.message || ''); return; }
+  $('testMsg').textContent = '已生成（模型 ' + d.data.model + '，尺寸 ' + d.data.size + '）。';
+  $('testImg').src = 'data:image/png;base64,' + d.data.b64;
+  $('testImg').classList.remove('hidden');
+  $('testPrompt').textContent = d.data.prompt;
+};
+load();
+</script>
+</body>
+</html>
